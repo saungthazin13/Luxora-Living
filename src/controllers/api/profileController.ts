@@ -1,8 +1,12 @@
 import express, { Request, Response, NextFunction } from "express";
 import { query, validationResult } from "express-validator";
 import { errorCode } from "../../../errorCode";
+import { checkUserIfNotExit } from "../../utils/auth";
+import { getUserById } from "../../services/authService";
+import { checkUploadFile } from "../../utils/check";
 interface CustomRequest extends Request {
   userId?: number;
+  file?: any;
 }
 
 export const changeLanguage = [
@@ -24,5 +28,17 @@ export const changeLanguage = [
     const { lng } = req.query;
     res.cookie("i18next", lng);
     res.status(200).json({ message: req.t("changeLan", { lang: lng }) });
+  },
+];
+
+export const uploadProfile = [
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    const userId = req.userId;
+    const image = req.file;
+    const user = await getUserById(userId!);
+    checkUserIfNotExit(user);
+    checkUploadFile(image);
+
+    res.status(200).json({ message: "Profle picture uploaded successfully!" });
   },
 ];

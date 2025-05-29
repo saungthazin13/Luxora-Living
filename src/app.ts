@@ -11,7 +11,11 @@ import i18next from "i18next";
 import Backend from "i18next-fs-backend";
 import middleware, { handle } from "i18next-http-middleware";
 import path from "path"; //for i18next multilanguage
-
+import cron from "node-cron";
+import {
+  createOrUpdateSettingStatus,
+  getSettingStatus,
+} from "./services/settingService";
 export const app = express();
 
 //save for hacker
@@ -22,28 +26,27 @@ var corsOptions = {
     origin: any,
     callback: (err: Error | null, origin?: any) => void
   ) {
-    if (!origin) return callback(null, true); //allow request for postman
-
+    // Allow requests with no origin ( like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
     if (whitelist.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true, //Allow cookies or authorization header
+  credentials: true, // Allow cookies or authorization header
 };
 
 //for middleware for expressjs
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cors());
+// app.use(cors());
 app.use(helmet());
 app.use(compression()); //for zip
 app.use(limiter); //for create middlewars for ratelimiter.ts
 app.use(express.static("public")); //link for style css input for upper page
 app.use(cookieParser());
-app.use(cors());
 
 i18next
   .use(Backend)
@@ -79,4 +82,12 @@ app.use((error: any, req: Request, res: Response, next: NextFunction) => {
   const message = error.message || "Server error..";
   const code = error.code || "Error code";
   res.status(status).json({ message, error: code });
+});
+cron.schedule("* 5 * * *", async () => {
+  console.log("running a task every minute");
+  const setting = await getSettingStatus("maintenance");
+  if (setting?.value === "true") {
+    await createOrUpdateSettingStatus("maintenance", "false");
+    console.log("Now Maintenance Mode is Off");
+  }
 });
