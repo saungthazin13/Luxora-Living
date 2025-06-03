@@ -8,12 +8,12 @@ import userRouth from "./api/";
 
 const router = express.Router();
 
-// router.use(authRouter);
-// router.use(userRouth);
-// router.use("/admin", auth, authorise(true, "ADMIN"), adminRouth);
+router.use(authRouter);
+router.use("/user", userRouth);
+router.use("/admin", auth, authorise(true, "ADMIN"), adminRouth);
 
-router.use(maintenance, authRouter);
-router.use("/user", maintenance, userRouth);
-router.use("/admin", maintenance, auth, authorise(true, "ADMIN"), adminRouth);
+// router.use(maintenance, authRouter);
+// router.use("/user", maintenance, userRouth);
+// router.use("/admin", maintenance, auth, authorise(true, "ADMIN"), adminRouth);
 
 export default router;

@@ -74,7 +74,7 @@ export const changeLanguage = [
 //     });
 //   },
 // ];
-
+//for single file upload
 export const uploadProfile = async (
   req: CustomRequest,
   res: Response,
@@ -113,5 +113,15 @@ export const uploadProfile = async (
   res.status(200).json({
     message: "Profile picture uploaded successfully.",
     image: fileName,
+  });
+};
+//for Mulitiple File upload
+export const uploadProfileMultiple = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  res.status(200).json({
+    message: " Multiple Profile picture uploaded successfully.",
   });
 };
