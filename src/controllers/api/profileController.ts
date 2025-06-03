@@ -2,8 +2,13 @@ import express, { Request, Response, NextFunction } from "express";
 import { query, validationResult } from "express-validator";
 import { errorCode } from "../../../errorCode";
 import { checkUserIfNotExit } from "../../utils/auth";
-import { getUserById } from "../../services/authService";
+import { getUserById, updateUser } from "../../services/authService";
 import { checkUploadFile } from "../../utils/check";
+import { unlink } from "node:fs/promises"; //for image
+import path from "path";
+import { createError } from "../../utils/error";
+import fs from "fs";
+
 interface CustomRequest extends Request {
   userId?: number;
   file?: any;
@@ -31,14 +36,82 @@ export const changeLanguage = [
   },
 ];
 
-export const uploadProfile = [
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
-    const userId = req.userId;
-    const image = req.file;
-    const user = await getUserById(userId!);
-    checkUserIfNotExit(user);
-    checkUploadFile(image);
+// export const uploadProfile = [
+//   async (req: CustomRequest, res: Response, next: NextFunction) => {
+//     const userId = req.userId;
+//     const image = req.file;
 
-    res.status(200).json({ message: "Profle picture uploaded successfully!" });
-  },
-];
+//     const user = await getUserById(userId!);
+//     checkUserIfNotExit(user);
+//     checkUploadFile(image);
+
+//     const fileName = image.filename;
+//     //filepath
+//     // const filePath = image.path;
+//     // const filePath = image.path.replace("\\", "/");
+
+//     //delete for db (or) last photo show
+//     if (user?.image) {
+//       const filePath = path.join(
+//         __dirname,
+//         "../../..",
+//         "/uploads/images",
+//         user.image
+//       );
+//       try {
+//         await unlink(filePath);
+//       } catch (error) {
+//         console.warn("Old image deletion failed:", error);
+//       }
+//     }
+//     const userData = {
+//       image: fileName,
+//     };
+//     await updateUser(user?.id!, userData);
+//     res.status(200).json({
+//       message: "Profle picture uploaded successfully!",
+//       image: fileName,
+//     });
+//   },
+// ];
+
+export const uploadProfile = async (
+  req: CustomRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  const userId = req.userId;
+  const image = req.file;
+  const user = await getUserById(userId!);
+  checkUserIfNotExit(user);
+  checkUploadFile(image);
+
+  //  console.log("Image -----", image);
+  const fileName = image!.filename;
+  // const filePath = image!.path;
+  // const filePath = image!.path.replace("\\", "/");
+
+  if (user?.image) {
+    try {
+      const filePath = path.join(
+        __dirname,
+        "../../..",
+        "/uploads/images",
+        user!.image!
+      );
+      await unlink(filePath);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const userData = {
+    image: fileName,
+  };
+  await updateUser(user?.id!, userData);
+
+  res.status(200).json({
+    message: "Profile picture uploaded successfully.",
+    image: fileName,
+  });
+};

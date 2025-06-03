@@ -8,5 +8,14 @@ import upload from "../../../middlewares/uploadFile";
 const router = express.Router();
 
 router.post("/change-language", changeLanguage);
-router.patch("/profile/upload", upload.single("avatar")), uploadProfile;
+
+// router.patch("/profile/upload", upload.single("avatar"), uploadProfile)
+// ;
+router.patch(
+  "/auth/profile/upload",
+  auth,
+  upload.single("avatar"),
+  uploadProfile
+);
+
 export default router;

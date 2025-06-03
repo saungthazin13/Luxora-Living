@@ -13,7 +13,7 @@ const router = express.Router();
 // router.use("/admin", auth, authorise(true, "ADMIN"), adminRouth);
 
 router.use(maintenance, authRouter);
-router.use(maintenance, userRouth);
+router.use("/user", maintenance, userRouth);
 router.use("/admin", maintenance, auth, authorise(true, "ADMIN"), adminRouth);
 
 export default router;

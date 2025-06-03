@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { errorCode } from "../../errorCode";
 import { getUserById, updateUser } from "../services/authService";
-import { error } from "console";
 import { createError } from "../utils/error";
 
 interface CustomRequst extends Request {
@@ -10,29 +9,37 @@ interface CustomRequst extends Request {
 }
 
 export const auth = (req: CustomRequst, res: Response, next: NextFunction) => {
-  const accessToken = req.cookies ? req.cookies.accessToken : null; //if not data for cookies in error
+  // const platform = req.headers["x-platform"];
+  // if (platform === "mobile") {
+  //   const accessTokenMobile = req.headers.authorization?.split(" ")[1];
+  //   console.log("Request from Mobile", accessTokenMobile);
+  // } else {
+  //   console.log("Request from Web");
+  // }
+  const accessToken = req.cookies ? req.cookies.accessToken : null;
   const refreshToken = req.cookies ? req.cookies.refreshToken : null;
 
   if (!refreshToken) {
     return next(
       createError(
-        "Your are not an authenticated user.",
+        "You are not an authenticated user.",
         401,
         errorCode.unauthenticated
       )
     );
   }
-  const generateNewToken = async () => {
+
+  const generateNewTokens = async () => {
     let decoded;
     try {
       decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!) as {
         id: number;
         phone: string;
       };
-    } catch (err) {
+    } catch (error) {
       return next(
         createError(
-          "Your are not an authenticated user.",
+          "You are not an authenticated user.",
           401,
           errorCode.unauthenticated
         )
@@ -40,96 +47,98 @@ export const auth = (req: CustomRequst, res: Response, next: NextFunction) => {
     }
 
     if (isNaN(decoded.id)) {
-      //for true (not number)
-
       return next(
         createError(
-          "Your are not an authenticated user.",
+          "You are not an authenticated user.",
           401,
           errorCode.unauthenticated
         )
       );
     }
+
     const user = await getUserById(decoded.id);
     if (!user) {
       return next(
         createError(
-          "Your are not an authenticated user.",
-          401,
-          errorCode.unauthenticated
-        )
-      );
-    }
-    //for hacker fake account id and user (verify)
-    if (user!.phone !== decoded.phone) {
-      return next(
-        createError(
-          "This account have not register",
-          401,
-          errorCode.unauthenticated
-        )
-      );
-    }
-    //security for db token for convert to hacker
-    if (user!.randToken !== refreshToken) {
-      const error: any = new Error("This account have not register");
-      error.status = 401;
-      error.code = errorCode.unauthenticated;
-      return next(
-        createError(
-          "This account have not register",
+          "This account has not registered!.",
           401,
           errorCode.unauthenticated
         )
       );
     }
 
-    //successful for Authention for jwt Token
-    const accessPayload = {
-      id: user.id,
-    };
-    const refreshPayload = {
-      id: user.id,
-      phone: user!.phone,
-    };
-    const newaccessToken = jwt.sign(
-      accessPayload,
+    if (user.phone !== decoded.phone) {
+      return next(
+        createError(
+          "You are not an authenticated user.",
+          401,
+          errorCode.unauthenticated
+        )
+      );
+    }
+
+    if (user.randToken !== refreshToken) {
+      return next(
+        createError(
+          "You are not an authenticated user.",
+          401,
+          errorCode.unauthenticated
+        )
+      );
+    }
+
+    // Authorization token
+    const accessTokenPayload = { id: user.id };
+    const refreshTokenPayload = { id: user.id, phone: user.phone };
+
+    const newAccessToken = jwt.sign(
+      accessTokenPayload,
       process.env.ACCESS_TOKEN_SECRET!,
       {
-        expiresIn: 60 * 15, //for expired time
+        expiresIn: 60 * 15, // 15 min
       }
     );
-    const newrefreshToken = jwt.sign(
-      refreshPayload,
-      process.env.ACCESS_TOKEN_SECRET!,
+
+    const newRefreshToken = jwt.sign(
+      refreshTokenPayload,
+      process.env.REFRESH_TOKEN_SECRET!,
       {
-        expiresIn: "30d", //for expired time
+        expiresIn: "30d",
       }
     );
+
     const userData = {
-      randToken: newrefreshToken,
+      randToken: newRefreshToken,
     };
+
     await updateUser(user.id, userData);
+
     res
-      .cookie("newaccessToken", newaccessToken, {
+      .cookie("accessToken", newAccessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "Production",
-        sameSite: "none", //not for same site
-        maxAge: 15 * 60 * 1000, //for 15 min
-      }) //for sections cookie in http only
-      .cookie("newrefreshToken", newrefreshToken, {
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      })
+      .cookie("refreshToken", newRefreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "Production",
-        sameSite: "none", //not for same site
-        maxAge: 30 * 24 * 60 * 60 * 1000, //for 15 min
+        secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       });
+
     req.userId = user.id;
-    return next(error);
+    next();
   };
 
   if (!accessToken) {
-    generateNewToken(); //await generateNewtoken(); for continue to code
+    generateNewTokens(); // await generateNewTokens();
+    // const err: any = new Error("Access Token has expired.");
+    // err.status = 401;
+    // err.code = errorCode.accessTokenExpired;
+    // return next(err);
   } else {
+    // Verify access Token
     let decoded;
     try {
       decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET!) as {
@@ -137,43 +146,31 @@ export const auth = (req: CustomRequst, res: Response, next: NextFunction) => {
       };
 
       if (isNaN(decoded.id)) {
-        //for true (not number)
-        const error: any = new Error("Your are not an authenticated user.");
-        error.status = 401;
-        error.code = errorCode.unauthenticated;
-        return next(error);
+        return next(
+          createError(
+            "You are not an authenticated user.",
+            401,
+            errorCode.unauthenticated
+          )
+        );
       }
 
       req.userId = decoded.id;
       next();
     } catch (error: any) {
-      if (error.name === "Token Expired Error") {
-        generateNewToken();
+      if (error.name === "TokenExpiredError") {
+        generateNewTokens(); // await generateNewTokens();
+        // error.message = "Access Token has expired.";
+        // error.status = 401;
+        // error.code = errorCode.accessTokenExpired;
       } else {
-        error.message = "Access Token is Invalid";
+        error.message = "Acess Token is invalid.";
         error.status = 400;
         error.code = errorCode.attack;
+        return next(
+          createError("Acess Token is invalid.", 400, errorCode.attack)
+        );
       }
-      return next(error);
     }
-  }
-
-  //verify access token
-  let decoded;
-  try {
-    decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET!) as {
-      id: number;
-    };
-    req.userId = decoded.id;
-    next();
-  } catch (error: any) {
-    if (error.name === "Token Expired Error") {
-      generateNewToken();
-    } else {
-      error.message = "Access Token is Invalid";
-      error.status = 400;
-      error.code = errorCode.attack;
-    }
-    return next(error);
   }
 };

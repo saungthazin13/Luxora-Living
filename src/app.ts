@@ -1,7 +1,8 @@
 import express, { Request, Response, NextFunction } from "express";
 import helmet from "helmet";
 import compression from "compression";
-import cors from "cors"; //other not found
+
+import cors from "cors";
 import morgan from "morgan";
 import { limiter } from "./middlewares/ratelimiter";
 import healthRouter from "./routes/v1/health";
@@ -71,7 +72,11 @@ i18next
 app.use(middleware.handle(i18next));
 
 app.use(healthRouter); //for create controller for healthcontroller.ts
+app.use(express.static("public")); //image for public access for browser public access
+app.use(express.static("uploads")); //image for public access for browser public access
 app.use(routes);
+app.set("trust proxy", 1);
+
 // app.use(authRouter);// app.use(userRouth);  //not for middleware in admin
 // app.use("/admin", auth, authorise(true, "ADMIN"), adminRouth);//use for middleware admin
 // app.use(userRouth); //for this router put for under i18next
