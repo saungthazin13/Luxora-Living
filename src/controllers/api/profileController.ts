@@ -7,13 +7,13 @@ import { checkUploadFile } from "../../utils/check";
 import { unlink } from "node:fs/promises"; //for image
 import path from "path";
 import { createError } from "../../utils/error";
-import sharp from "sharp";
+import sharp from "sharp"; //for image optimization
 
 interface CustomRequest extends Request {
   userId?: number;
   file?: any;
 }
-
+// for change language for eng to myanmar 0r other language
 export const changeLanguage = [
   query("lng", "Invalid Language code.")
     .trim()
@@ -141,7 +141,6 @@ export const uploadProfileOptimize = async (
   await updateUser(user?.id!, userData);
 
   res.status(200).json({
-    message: "Profile picture uploaded successfully.",
-    image: fileName,
+    message: "Ok",
   });
 };

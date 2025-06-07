@@ -160,16 +160,14 @@ exports.Prisma.UserScalarFieldEnum = {
   updatedAT: 'updatedAT'
 };
 
-exports.Prisma.TagScalarFieldEnum = {
+exports.Prisma.PostTagScalarFieldEnum = {
   id: 'id',
   name: 'name'
 };
 
-exports.Prisma.TaggableScalarFieldEnum = {
+exports.Prisma.ProductTagScalarFieldEnum = {
   id: 'id',
-  tagId: 'tagId',
-  type: 'type',
-  typeId: 'typeId'
+  name: 'name'
 };
 
 exports.Prisma.ProductScalarFieldEnum = {
@@ -259,8 +257,8 @@ exports.Prisma.ModelName = {
   Type: 'Type',
   Post: 'Post',
   User: 'User',
-  Tag: 'Tag',
-  Taggable: 'Taggable',
+  PostTag: 'PostTag',
+  ProductTag: 'ProductTag',
   Product: 'Product',
   Image: 'Image',
   Order: 'Order',
