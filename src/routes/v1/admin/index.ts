@@ -8,7 +8,7 @@ import {
   updatePost,
   deletePost,
 } from "../../../controllers/admin/postController";
-
+import { auth } from "../../../middlewares/auth";
 import { uploadMemory } from "../../../middlewares/uploadFile";
 
 const router = express.Router();

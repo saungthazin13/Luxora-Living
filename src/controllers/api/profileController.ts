@@ -121,6 +121,7 @@ export const uploadProfileOptimize = async (
     res.status(500).json({ message: "Error optimize message" });
     return; //call for res have return
   }
+
   //Optimized image have save for uploads file
   if (user?.image) {
     try {
@@ -135,6 +136,7 @@ export const uploadProfileOptimize = async (
       console.log(error);
     }
   }
+
   const userData = {
     image: fileName,
   };
