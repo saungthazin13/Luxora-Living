@@ -10,6 +10,7 @@ import upload, { uploadMemory } from "../../../middlewares/uploadFile";
 import {
   getPost,
   getPostsByPagination,
+  getInfinitePostsByPagination,
 } from "../../../controllers/api/postController";
 const router = express.Router();
 
@@ -28,9 +29,10 @@ router.patch(
   upload.array("avatar"),
   uploadProfileMultiple
 );
-//CRUD for post for user
-router.get("/posts", auth, getPostsByPagination);
+//CRUD for post for user  for offset pagination
+router.get("/posts", auth, getPostsByPagination); //offset pagination
+// for cursor  pagination
+router.get("/posts/infinited", auth, getInfinitePostsByPagination); //Cursor base pagination
 router.get("/posts/:id", auth, getPost);
-//
 
 export default router;

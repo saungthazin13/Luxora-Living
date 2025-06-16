@@ -16,6 +16,7 @@ import {
   updateOnePost,
 } from "../../services/postService";
 import sanitizeHtml from "sanitize-html";
+import { Prisma } from "../../generated/prisma";
 
 interface CustomRequest extends Request {
   userId?: number;
@@ -221,7 +222,7 @@ export const updatePost = [
 
 //delete Post for CRUD
 export const deletePost = [
-  body("postId", "PostId  is required.").trim().notEmpty().isInt({ min: 1 }),
+  body("postId", "PostId  is required.").isInt({ gt: 0 }),
   async (req: CustomRequest, res: Response, next: NextFunction) => {
     const errors = validationResult(req).array({ onlyFirstError: true });
     if (errors.length > 0) {
