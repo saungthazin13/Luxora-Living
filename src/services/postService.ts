@@ -1,7 +1,4 @@
-import { title } from "process";
 import { PrismaClient } from "../generated/prisma";
-import { body } from "express-validator";
-import { connect } from "http2";
 // const prisma = new PrismaClient();
 const prisma = new PrismaClient().$extends({
   result: {
@@ -134,6 +131,7 @@ export const updateOnePost = async (postId: number, postData: PostArgs) => {
   //for tag
   if (postData.tags && postData.tags.length > 0) {
     data.tags = {
+      set: [], //remove for all old database
       connectOrCreate: postData.tags.map((tagName) => ({
         where: { name: tagName },
         create: {

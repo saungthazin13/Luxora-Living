@@ -10,8 +10,7 @@ import {
   getPostList,
   getPostWithRelation,
 } from "../../services/postService";
-import { title } from "node:process";
-import { skip } from "node:test";
+import { getOrSetCache } from "../../utils/cache";
 
 interface CustomRequest extends Request {
   userId?: number;
@@ -112,7 +111,7 @@ export const getPostsByPagination = [
   },
 ];
 
-//Cursor pagination
+//Cursor base pagination
 export const getInfinitePostsByPagination = [
   query("Cursor", "Cursor must be Post 10").isInt({ gt: 0 }).optional(),
   query("Limit", "Limit number must be unsigned integer")
@@ -153,7 +152,11 @@ export const getInfinitePostsByPagination = [
         id: "asc",
       },
     };
-    const posts = await getPostList(options);
+    // const posts = await getPostList(options);
+    const cacheKey = `posts:${JSON.stringify(req.query)}`;
+    const posts = await getOrSetCache(cacheKey, async () => {
+      return await getPostList(options);
+    });
     const hasNextPage = posts.length > +Limit; //6 > 5
     if (hasNextPage) {
       posts.pop();

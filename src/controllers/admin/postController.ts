@@ -16,7 +16,6 @@ import {
   updateOnePost,
 } from "../../services/postService";
 import sanitizeHtml from "sanitize-html";
-import { Prisma } from "../../generated/prisma";
 
 interface CustomRequest extends Request {
   userId?: number;

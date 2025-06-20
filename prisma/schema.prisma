@@ -107,31 +107,30 @@ model ProductTag {
 // }
 
 model Product {
-    id          Int      @id @default(autoincrement())
-    name        String?  @db.VarChar(52)
+    id          Int                @id @default(autoincrement())
+    name        String?            @db.VarChar(52)
     description String
-    price       Decimal  @db.Decimal(10, 2)
-    discount    Decimal  @default(0) @db.Decimal(10, 2)
-    rating      Int      @default(0) @db.SmallInt
-    inventory   Int      @default(0)
-    status      Status   @default(ACTIVE)
-    createdAt   DateTime @default(now())
-    updatedAT   DateTime @updatedAt
-    Image       Image[]
+    price       Decimal            @db.Decimal(10, 2)
+    discount    Decimal            @default(0) @db.Decimal(10, 2)
+    rating      Int                @default(0) @db.SmallInt
+    inventory   Int                @default(0)
+    status      Status             @default(ACTIVE)
+    createdAt   DateTime           @default(now())
+    updatedAT   DateTime           @updatedAt
     categoryId  Int
-    category    Category @relation(fields: [categoryId], references: [id])
+    category    Category           @relation(fields: [categoryId], references: [id])
     typeId      Int
-    type        Type     @relation(fields: [typeId], references: [id])
-
-    products ProductsOnOrders[]
-    tags     ProductTag[]
+    type        Type               @relation(fields: [typeId], references: [id])
+    images      Image[]
+    products    ProductsOnOrders[]
+    tags        ProductTag[]
 }
 
 model Image {
     id        Int     @id @default(autoincrement())
     path      String? @db.VarChar(52)
     productId Int
-    product   Product @relation(fields: [productId], references: [id])
+    product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
 
 model Order {
