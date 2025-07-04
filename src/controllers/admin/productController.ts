@@ -6,7 +6,14 @@ import { getUserById } from "../../services/authService";
 import { createError } from "../../utils/error";
 import path from "path";
 import sharp from "sharp";
-import { createOneProduct } from "../../services/productService";
+
+import {
+  createOneProduct,
+  getProductById,
+  updateOneProduct,
+  deleteOneProduct,
+} from "../../services/productService";
+import { checkModelIfExit } from "../../utils/check";
 
 interface CustomRequest extends Request {
   userId?: number;
@@ -117,6 +124,121 @@ export const createProduct = [
       console.error("Product creation error:", err);
       return next(
         createError("Failed to create product", 500, errorCode.invalid)
+      );
+    }
+  },
+];
+
+//update Product for CRUD
+export const updateProduct = [
+  body("productId", "ProductId  is required.")
+    .trim()
+    .notEmpty()
+    .isInt({ min: 1 }),
+  body("name", "Name is required.").trim().notEmpty().escape(),
+  body("description", "Description is required.").trim().notEmpty().escape(),
+
+  body("price", "Price must be a valid number greater than 0.1").isFloat({
+    min: 0.1,
+  }),
+  body("discount", "Discount must be a valid number").isFloat({ min: 0 }),
+  body("inventory", "Inventory must be a positive integer").isInt({ min: 1 }),
+  body("category", "Category is required.").trim().notEmpty().escape(),
+  body("type", "Type is required.").trim().notEmpty().escape(),
+  body("tags", "Tags must be a comma-separated list.")
+    .optional({ nullable: true })
+    .customSanitizer((value) => {
+      if (value) {
+        return value
+          .split(",")
+          .map((tag: string) => tag.trim())
+          .filter((tag: string) => tag !== "");
+      }
+      return value;
+    }),
+
+  // Controller
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+      const errors = validationResult(req).array({ onlyFirstError: true });
+      // console.log("Request Body:", req.body); //for console error
+      if (errors.length > 0) {
+        return next(createError(errors[0].msg, 400, errorCode.invalid));
+      }
+      const {
+        productId,
+        name,
+        description,
+        price,
+        discount,
+        inventory,
+        category,
+        type,
+        tags,
+      } = req.body;
+      const product = await getProductById(+productId);
+      const images = req.files as Express.Multer.File[];
+      // not production for condition
+      if (!product) {
+        return next(
+          createError("This data model does not exit", 409, errorCode.invalid)
+        );
+      }
+
+      const data: any = {
+        productId,
+        name,
+        description,
+        price,
+        discount,
+        inventory: +inventory,
+        category,
+        type,
+        tags,
+      };
+
+      const productUpdated = await updateOneProduct(product.id, data);
+
+      res.status(200).json({
+        message: "Product updated successfully",
+        productId: productUpdated.id,
+      });
+    } catch (err) {
+      console.error("Product creation error:", err);
+      return next(
+        createError("Failed to update product", 500, errorCode.invalid)
+      );
+    }
+  },
+];
+
+//delete product need for id
+export const deleteProduct = [
+  body("productId", "ProductId  is required.")
+    .trim()
+    .notEmpty()
+    .isInt({ min: 1 }),
+
+  async (req: CustomRequest, res: Response, next: NextFunction) => {
+    try {
+      const errors = validationResult(req).array({ onlyFirstError: true });
+      // console.log("Request Body:", req.body); //for console error
+      if (errors.length > 0) {
+        return next(createError(errors[0].msg, 400, errorCode.invalid));
+      }
+      const { productId } = req.body;
+      const product = await getProductById(+productId);
+      checkModelIfExit(product);
+      const productDeleted = await deleteOneProduct(product!.id);
+
+      res.status(200).json({
+        message: "Product deleteded successfully",
+        productId: productDeleted.id,
+      });
+    } catch (err) {
+      console.error("Product creation error:", err);
+      return next(
+        createError("Failed to update product", 500, errorCode.invalid)
       );
     }
   },

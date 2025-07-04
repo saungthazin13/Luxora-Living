@@ -10,8 +10,8 @@ import {
 } from "../../../controllers/admin/postController";
 import {
   createProduct,
-  // updateProduct,
-  // deleteProduct,
+  updateProduct,
+  deleteProduct,
 } from "../../../controllers/admin/productController";
 import { auth } from "../../../middlewares/auth";
 import { uploadMemory } from "../../../middlewares/uploadFile";
@@ -29,7 +29,7 @@ router.delete("/posts", deletePost);
 
 //CRUD for product for admin
 router.post("/products", uploadMemory.array("images", 4), createProduct);
-// router.patch("/products", upload.array("images",4), updateProduct);
-// router.delete("/products", deleteProduct);
+router.patch("/products", upload.array("images", 4), updateProduct);
+router.delete("/products", deleteProduct);
 
 export default router;
